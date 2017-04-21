@@ -94,6 +94,7 @@
 #include "ardour/route_graph.h"
 #include "ardour/route_group.h"
 #include "ardour/send.h"
+#include "ardour/selection.h"
 #include "ardour/session.h"
 #include "ardour/session_directory.h"
 #include "ardour/session_playlists.h"
@@ -324,6 +325,7 @@ Session::Session (AudioEngine &eng,
 	, _midi_ports (0)
 	, _mmc (0)
 	, _vca_manager (new VCAManager (*this))
+	, _selection (new CoreSelection)
 {
 	uint32_t sr = 0;
 

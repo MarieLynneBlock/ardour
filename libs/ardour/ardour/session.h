@@ -114,6 +114,7 @@ class Bundle;
 class Butler;
 class Click;
 class ControllableDescriptor;
+class CoreSelection;
 class Diskstream;
 class ExportHandler;
 class ExportStatus;
@@ -288,6 +289,8 @@ class LIBARDOUR_API Session : public PBD::StatefulDestructible, public PBD::Scop
 	boost::shared_ptr<RouteList> get_routes() const {
 		return routes.reader ();
 	}
+
+	CoreSelection& selection () { return *_selection; }
 
 	/* because the set of Stripables consists of objects managed
 	 * independently, in multiple containers within the Session (or objects
@@ -2085,6 +2088,8 @@ class LIBARDOUR_API Session : public PBD::StatefulDestructible, public PBD::Scop
 	void rewire_selected_midi (boost::shared_ptr<MidiTrack>);
 	void rewire_midi_selection_ports ();
 	boost::weak_ptr<MidiTrack> current_midi_target;
+
+	CoreSelection* _selection;
 };
 
 
