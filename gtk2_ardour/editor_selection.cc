@@ -27,6 +27,7 @@
 #include "ardour/playlist.h"
 #include "ardour/profile.h"
 #include "ardour/route_group.h"
+#include "ardour/selection.h"
 #include "ardour/session.h"
 
 #include "control_protocol/control_protocol.h"
@@ -1020,13 +1021,27 @@ Editor::track_selection_changed ()
 
 	for (TrackViewList::iterator i = track_views.begin(); i != track_views.end(); ++i) {
 
-		bool yn = (find (selection->tracks.begin(), selection->tracks.end(), *i) != selection->tracks.end());
+		bool yn = false;
+
+		boost::shared_ptr<Stripable> s = (*i)->stripable ();
+
+		if (s) {
+			yn = _session->selection().selected (s);
+		}
 
 		(*i)->set_selected (yn);
 
 		TimeAxisView::Children c = (*i)->get_child_list ();
 		for (TimeAxisView::Children::iterator j = c.begin(); j != c.end(); ++j) {
-			(*j)->set_selected (find (selection->tracks.begin(), selection->tracks.end(), j->get()) != selection->tracks.end());
+
+			bool cyn = false;
+			boost::shared_ptr<Controllable> controllable = (*j)->controllable ();
+
+			if (controllable) {
+				cyn = _session->selection().selected (controllable);
+			}
+
+			(*j)->set_selected (cyn);
 		}
 
 		if (yn) {
