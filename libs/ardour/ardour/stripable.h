@@ -75,7 +75,7 @@ class LIBARDOUR_API Stripable : public SessionObject,
 	int set_state (XMLNode const&, int);
 
 	bool is_hidden() const { return _presentation_info.flags() & PresentationInfo::Hidden; }
-	bool is_selected() const { return _presentation_info.flags() & PresentationInfo::Selected; }
+	bool is_selected() const;
 
 	PresentationInfo const & presentation_info () const { return _presentation_info; }
 	PresentationInfo& presentation_info () { return _presentation_info; }
