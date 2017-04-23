@@ -1438,12 +1438,18 @@ Editor::set_session (Session *t)
 	StripableList sl;
 	TrackViewList tl;
 	_session->get_stripables (sl);
+	cerr << "Got " << sl.size() << " stripables\n";
+	uint32_t n = 0;
 	for (StripableList::const_iterator s = sl.begin(); s != sl.end(); ++s) {
-		if ((*s)->presentation_info().selected()) {
+		cerr << "checking selected for " << n << endl;
+		if ((*s)->is_selected()) {
+			cerr << "\tyes\n";
 			RouteTimeAxisView* rtav = get_route_view_by_route_id ((*s)->id());
 			if (rtav) {
 				tl.push_back (rtav);
 			}
+		} else {
+			cerr << "\tno\n";
 		}
 	}
 	if (!tl.empty()) {

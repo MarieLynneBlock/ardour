@@ -31,6 +31,7 @@
 #include "ardour/audio_track.h"
 #include "ardour/midi_track.h"
 #include "ardour/route.h"
+#include "ardour/selection.h"
 #include "ardour/session.h"
 #include "ardour/solo_isolate_control.h"
 #include "ardour/utils.h"
@@ -1086,7 +1087,6 @@ void
 EditorRoutes::presentation_info_changed (PropertyChange const & what_changed)
 {
 	PropertyChange soh;
-	soh.add (Properties::selected);
 	soh.add (Properties::order);
 	soh.add (Properties::hidden);
 
@@ -1175,7 +1175,11 @@ EditorRoutes::sync_treeview_from_presentation_info (PropertyChange const & what_
 		/* step one: set the treeview model selection state */
 		for (TreeModel::Children::iterator ri = rows.begin(); ri != rows.end(); ++ri) {
 			boost::shared_ptr<Stripable> stripable = (*ri)[_columns.stripable];
-			if (stripable && stripable->presentation_info().selected()) {
+			cerr << "working on " << stripable << endl;
+			if (stripable) {
+				cerr << "\t" << stripable->name() << " use count = " << stripable.use_count() << endl;
+			}
+			if (stripable && stripable->is_selected()) {
 				TimeAxisView* tav = (*ri)[_columns.tv];
 				if (tav) {
 					tvl.push_back (tav);
@@ -1666,7 +1670,7 @@ EditorRoutes::move_selected_tracks (bool up)
 
 			while (vsi != view_stripables.end()) {
 
-				if (vsi->stripable->presentation_info().selected()) {
+				if (vsi->stripable->is_selected()) {
 
 					if (unselected_neighbour != view_stripables.end()) {
 
@@ -1701,7 +1705,7 @@ EditorRoutes::move_selected_tracks (bool up)
 
 				--vsi;
 
-				if (vsi->stripable->presentation_info().selected()) {
+				if (vsi->stripable->is_selected()) {
 
 					if (unselected_neighbour != view_stripables.end()) {
 

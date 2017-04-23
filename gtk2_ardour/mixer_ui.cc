@@ -48,6 +48,7 @@
 #include "ardour/midi_track.h"
 #include "ardour/plugin_manager.h"
 #include "ardour/route_group.h"
+#include "ardour/selection.h"
 #include "ardour/session.h"
 #include "ardour/vca.h"
 #include "ardour/vca_manager.h"
@@ -850,7 +851,7 @@ Mixer_UI::sync_treeview_from_presentation_info (PropertyChange const & what_chan
 
 		for (list<MixerStrip *>::const_iterator i = strips.begin(); i != strips.end(); ++i) {
 			boost::shared_ptr<Stripable> stripable = (*i)->stripable();
-			if (stripable && stripable->presentation_info().selected()) {
+			if (stripable && stripable->is_selected()) {
 				_selection.add (*i);
 			} else {
 				_selection.remove (*i);

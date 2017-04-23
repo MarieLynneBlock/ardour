@@ -35,6 +35,10 @@
 #include "prompter.h"
 #include "selectable.h"
 
+namespace PBD {
+	class Controllable;
+}
+
 namespace ARDOUR {
 	class Session;
 	class Stripable;
@@ -57,6 +61,7 @@ class AxisView : public virtual PBD::ScopedConnectionList, public virtual ARDOUR
 	sigc::signal<void> Hiding;
 
 	virtual boost::shared_ptr<ARDOUR::Stripable> stripable() const = 0;
+	virtual boost::shared_ptr<PBD::Controllable> controllable() const { return boost::shared_ptr<PBD::Controllable>(); }
 
 	virtual std::string state_id() const = 0;
 	/* for now, we always return properties in string form.
