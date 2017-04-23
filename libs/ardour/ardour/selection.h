@@ -21,9 +21,12 @@
 #define __ardour_selection_h__
 
 #include <set>
+#include <vector>
 
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include "ardour/presentation_info.h"
 
 namespace PBD {
 class Controllable;
@@ -32,11 +35,35 @@ class Controllable;
 namespace ARDOUR {
 
 class Stripable;
+class PresentationInfo;
 
 class CoreSelection {
   public:
 	CoreSelection ();
 	~CoreSelection ();
+
+
+	void add (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
+	void remove (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
+	void set (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
+	void clear_stripables();
+
+	bool selected (boost::shared_ptr<const Stripable>) const;
+	bool selected (boost::shared_ptr<const PBD::Controllable>) const;
+
+	struct StripableControllable {
+		boost::shared_ptr<Stripable> stripable;
+		boost::shared_ptr<PBD::Controllable> controllable;
+		StripableControllable (boost::shared_ptr<Stripable> s, boost::shared_ptr<PBD::Controllable> c)
+			: stripable (s), controllable (c) {}
+	};
+
+	typedef std::vector<StripableControllable> StripableControllableSelection;
+
+	void get_stripables (StripableControllableSelection&);
+
+  private:
+	mutable Glib::Threads::Mutex _lock;
 
 	struct SelectedStripable {
 		SelectedStripable (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable> = boost::shared_ptr<PBD::Controllable>());
@@ -75,27 +102,19 @@ class CoreSelection {
 				return s1 < s2;
 			}
 
-			return (s1 < s2) && (c1 < c2);
+			if (s1 == s2) {
+				return c1 < c2;
+			}
+
+			return s1 < s2;
 		}
 	};
 
 	typedef std::set<SelectedStripable> SelectedStripables;
 
-	void add (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
-	void remove (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
-	void set (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
-	void clear_stripables();
-
-	bool selected (boost::shared_ptr<Stripable> const &) const;
-	bool selected (boost::shared_ptr<PBD::Controllable> const &) const;
-
-	void get_stripables (SelectedStripables&) const;
-
-	PBD::Signal0<void> StripablesChanged;
-
-  private:
-	Glib::Threads::Mutex _lock;
 	SelectedStripables _stripables;
+
+	void send_selection_change ();
 };
 
 } // namespace ARDOUR
