@@ -28,7 +28,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 
 #include <glibmm/threads.h>
 #include "pbd/fastlog.h"
@@ -90,8 +89,7 @@ class LIBARDOUR_API Route : public Stripable,
                             public Muteable,
                             public Monitorable,
                             public Automatable,
-                            public RouteGroupMember,
-                            public boost::enable_shared_from_this<Route>
+                            public RouteGroupMember
 {
 public:
 

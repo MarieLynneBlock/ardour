@@ -25,6 +25,7 @@
 #include <string>
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include "pbd/signals.h"
 
@@ -56,8 +57,10 @@ class RecordSafeControl;
  * and behaviour of the object.
  */
 
-class LIBARDOUR_API Stripable : public SessionObject {
-   public:
+class LIBARDOUR_API Stripable : public SessionObject,
+                                public boost::enable_shared_from_this<Stripable>
+{
+  public:
 	Stripable (Session& session, std::string const & name, PresentationInfo const &);
 	virtual ~Stripable () {}
 
