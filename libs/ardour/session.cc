@@ -4436,7 +4436,7 @@ Session::route_by_selected_count (uint32_t id) const
 	RouteList::iterator i;
 
 	for (i = r.begin(); i != r.end(); ++i) {
-		if ((*i)->presentation_info().selected()) {
+		if ((*i)->is_selected()) {
 			if (id == 0) {
 				return *i;
 			}
