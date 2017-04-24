@@ -52,7 +52,7 @@ class CoreSelection {
 	bool selected (boost::shared_ptr<const PBD::Controllable>) const;
 
   private:
-	mutable Glib::Threads::Mutex _lock;
+	mutable Glib::Threads::RWLock _lock;
 
 	struct SelectedStripable {
 		SelectedStripable (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable> = boost::shared_ptr<PBD::Controllable>());

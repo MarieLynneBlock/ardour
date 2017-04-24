@@ -46,7 +46,7 @@ CoreSelection::add (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllab
 	bool send = false;
 
 	{
-		Glib::Threads::Mutex::Lock lm (_lock);
+		Glib::Threads::RWLock::WriterLock lm (_lock);
 
 		SelectedStripable ss (s, c);
 
@@ -65,7 +65,7 @@ CoreSelection::remove (boost::shared_ptr<Stripable> s, boost::shared_ptr<Control
 {
 	bool send = false;
 	{
-		Glib::Threads::Mutex::Lock lm (_lock);
+		Glib::Threads::RWLock::WriterLock lm (_lock);
 
 		SelectedStripable ss (s, c);
 
@@ -86,7 +86,7 @@ void
 CoreSelection::set (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllable> c)
 {
 	{
-		Glib::Threads::Mutex::Lock lm (_lock);
+		Glib::Threads::RWLock::WriterLock lm (_lock);
 
 		SelectedStripable ss (s, c);
 
@@ -107,7 +107,7 @@ CoreSelection::clear_stripables ()
 	bool send = false;
 
 	{
-		Glib::Threads::Mutex::Lock lm (_lock);
+		Glib::Threads::RWLock::WriterLock lm (_lock);
 
 		if (_stripables.empty()) {
 			_stripables.clear ();
@@ -123,7 +123,7 @@ CoreSelection::clear_stripables ()
 bool
 CoreSelection::selected (boost::shared_ptr<const Stripable> s) const
 {
-	Glib::Threads::Mutex::Lock lm (_lock);
+	Glib::Threads::RWLock::ReaderLock lm (_lock);
 
 	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ++x) {
 
@@ -154,7 +154,7 @@ CoreSelection::selected (boost::shared_ptr<const Stripable> s) const
 bool
 CoreSelection::selected (boost::shared_ptr<const Controllable> c) const
 {
-	Glib::Threads::Mutex::Lock lm (_lock);
+	Glib::Threads::RWLock::ReaderLock lm (_lock);
 
 	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ++x) {
 		boost::shared_ptr<Controllable> cc = (*x).controllable.lock();
