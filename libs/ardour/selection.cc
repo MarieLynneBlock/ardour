@@ -120,31 +120,6 @@ CoreSelection::clear_stripables ()
 	}
 }
 
-void
-CoreSelection::get_stripables (StripableControllableSelection& ss)
-{
-	Glib::Threads::Mutex::Lock lm (_lock);
-
-	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ) {
-		boost::shared_ptr<Stripable> s = (*x).stripable.lock();
-		boost::shared_ptr<Controllable> c = (*x).controllable.lock();
-
-		if (!s) {
-			/* stripable deleted somehow. not a problem, just
-			   remove this entry.
-			*/
-			SelectedStripables::iterator tmp = x;
-			++tmp;
-			_stripables.erase (x);
-			x = tmp;
-			continue;
-		}
-
-		ss.push_back (StripableControllable (s, c));
-		++x;
-	}
-}
-
 bool
 CoreSelection::selected (boost::shared_ptr<const Stripable> s) const
 {
