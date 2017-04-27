@@ -1000,7 +1000,6 @@ struct SelectionOrderSorter {
 void
 Editor::track_selection_changed ()
 {
-	RouteNotificationListPtr routes (new RouteNotificationList);
 	StripableNotificationListPtr stripables (new StripableNotificationList);
 
 	for (TrackViewList::iterator i = track_views.begin(); i != track_views.end(); ++i) {
@@ -1044,7 +1043,6 @@ Editor::track_selection_changed ()
 		if (yn) {
 			RouteTimeAxisView* rtav = dynamic_cast<RouteTimeAxisView*> (*i);
 			if (rtav) {
-				routes->push_back (rtav->route());
 				stripables->push_back (rtav->route());
 			}
 		}
