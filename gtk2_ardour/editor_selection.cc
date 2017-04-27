@@ -258,7 +258,6 @@ Editor::set_selected_track (TimeAxisView& view, Selection::Operation op, bool no
 
 	switch (op) {
 	case Selection::Toggle:
-		cerr << "ES, toggle, view selected ? " << selection->selected (&view) << endl;
 		if (selection->selected (&view)) {
 			if (!no_remove) {
 				selection->remove (&view);

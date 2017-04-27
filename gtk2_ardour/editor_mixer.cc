@@ -200,8 +200,6 @@ Editor::set_selected_mixer_strip (TimeAxisView& view)
 		return;
 	}
 
-	cerr << "E:SSMS....\n";
-
 	// if this is an automation track, then we shold the mixer strip should
 	// show the parent
 
