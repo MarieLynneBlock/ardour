@@ -53,8 +53,6 @@ namespace ARDOUR {
 class AxisView : public virtual PBD::ScopedConnectionList, public virtual ARDOUR::SessionHandlePtr, public virtual Selectable
 {
   public:
-	ARDOUR::Session* session() const { return _session; }
-
 	virtual std::string name() const = 0;
 	virtual Gdk::Color color() const = 0;
 

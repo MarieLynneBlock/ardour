@@ -140,14 +140,13 @@ class TimeSelection;
 class RegionLayeringOrderEditor;
 class VerboseCursor;
 
-class Editor : public PublicEditor, public PBD::ScopedConnectionList, public ARDOUR::SessionHandlePtr
+class Editor : public PublicEditor, public PBD::ScopedConnectionList
 {
  public:
 	Editor ();
 	~Editor ();
 
 	void             set_session (ARDOUR::Session *);
-	ARDOUR::Session* session() const { return _session; }
 
 	Gtk::Window* use_own_window (bool and_fill_it);
 

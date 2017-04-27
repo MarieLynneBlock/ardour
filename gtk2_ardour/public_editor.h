@@ -40,6 +40,8 @@
 
 #include "pbd/statefuldestructible.h"
 
+#include "ardour/session_handle.h"
+
 #include "canvas/fwd.h"
 
 #include "gtkmm2ext/actions.h"
@@ -105,7 +107,7 @@ using ARDOUR::framecnt_t;
  * of PublicEditor need not be recompiled if private methods or member variables
  * change.
  */
-class PublicEditor : public Gtkmm2ext::Tabbable {
+class PublicEditor : public Gtkmm2ext::Tabbable,  public ARDOUR::SessionHandlePtr {
   public:
 	PublicEditor (Gtk::Widget& content);
 	virtual ~PublicEditor ();
@@ -122,9 +124,6 @@ class PublicEditor : public Gtkmm2ext::Tabbable {
 	 * @param s Session to connect to.
 	 */
 	virtual void set_session (ARDOUR::Session* s) = 0;
-
-	/** @return The Session that we are editing, or 0 */
-	virtual ARDOUR::Session* session () const = 0;
 
 	/** Set the snap type.
 	 * @param t Snap type (defined in editing_syms.h)
