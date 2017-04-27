@@ -66,31 +66,6 @@ class CoreSelection {
 			boost::shared_ptr<Stripable> s2 = other.stripable.lock();
 			boost::shared_ptr<PBD::Controllable> c2 = other.controllable.lock();
 
-			if (!s1) {
-				/* our stripable no longer exists, treat as
-				   null, and thus always sort before other, even
-				   if other has a null stripable also.
-				*/
-				return true;
-			}
-
-			if (s1 && !s2) {
-				/* other stripable no longer exists, but ours
-				   does, so we sort after s2
-				*/
-				return false;
-			}
-
-			if (!c1) {
-				/* no controllable for us */
-				return s1 < s2;
-			}
-
-			if (c1 && !c2) {
-				/* controllable for us, but none for other */
-				return s1 < s2;
-			}
-
 			if (s1 == s2) {
 				return c1 < c2;
 			}
