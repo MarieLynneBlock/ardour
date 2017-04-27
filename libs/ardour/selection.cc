@@ -17,8 +17,10 @@
 
 */
 
+#include "pbd/compose.h"
 #include "pbd/signals.h"
 
+#include "ardour/debug.h"
 #include "ardour/selection.h"
 
 using namespace ARDOUR;
@@ -41,6 +43,18 @@ CoreSelection::~CoreSelection ()
 }
 
 void
+CoreSelection::toggle (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllable> c)
+{
+	DEBUG_TRACE (DEBUG::Selection, string_compose ("toggle: s %1 selected %2 c %3 selected %4\n",
+	                                               s, selected (s), c, selected (c)));
+	if ((c && selected (c)) || selected (s)) {
+		remove (s, c);
+	} else {
+		add (s, c);
+	}
+}
+
+void
 CoreSelection::add (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllable> c)
 {
 	bool send = false;
@@ -51,7 +65,10 @@ CoreSelection::add (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllab
 		SelectedStripable ss (s, c);
 
 		if (_stripables.insert (ss).second) {
+			DEBUG_TRACE (DEBUG::Selection, string_compose ("added %1/%2 to s/c selection\n", s, c));
 			send = true;
+		} else {
+			DEBUG_TRACE (DEBUG::Selection, string_compose ("%1/%2 already in s/c selection\n", s, c));
 		}
 	}
 
@@ -73,6 +90,7 @@ CoreSelection::remove (boost::shared_ptr<Stripable> s, boost::shared_ptr<Control
 
 		if (i != _stripables.end()) {
 			_stripables.erase (i);
+			DEBUG_TRACE (DEBUG::Selection, string_compose ("removed %1/%2 from s/c selection\n", s, c));
 			send = true;
 		}
 	}
@@ -91,11 +109,13 @@ CoreSelection::set (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllab
 		SelectedStripable ss (s, c);
 
 		if (_stripables.size() == 1 && _stripables.find (ss) != _stripables.end()) {
+			std::cerr << "Already selected\n";
 			return;
 		}
 
 		_stripables.clear ();
 		_stripables.insert (ss);
+		DEBUG_TRACE (DEBUG::Selection, string_compose ("set s/c selection to %1/%2\n", s, c));
 	}
 
 	send_selection_change ();
@@ -106,12 +126,15 @@ CoreSelection::clear_stripables ()
 {
 	bool send = false;
 
+	DEBUG_TRACE (DEBUG::Selection, "clearing s/c selection\n");
+
 	{
 		Glib::Threads::RWLock::WriterLock lm (_lock);
 
-		if (_stripables.empty()) {
+		if (!_stripables.empty()) {
 			_stripables.clear ();
 			send = true;
+			DEBUG_TRACE (DEBUG::Selection, "cleared s/c selection\n");
 		}
 	}
 
@@ -120,21 +143,29 @@ CoreSelection::clear_stripables ()
 	}
 }
 
+/* appalling C++ hacks part eleventyfirst: how to differentiate an
+ * uninitialized and expired weak_ptr.
+ *
+ * see: http://stackoverflow.com/questions/26913743/can-an-expired-weak-ptr-be-distinguished-from-an-uninitialized-one
+ */
+
+template <typename T>
+static bool weak_ptr_is_not_null (const boost::weak_ptr<T>& w) {
+	return w.owner_before(boost::weak_ptr<T>()) || boost::weak_ptr<T>().owner_before(w);
+}
+
 bool
 CoreSelection::selected (boost::shared_ptr<const Stripable> s) const
 {
+	if (!s) {
+		return false;
+	}
+
 	Glib::Threads::RWLock::ReaderLock lm (_lock);
 
 	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ++x) {
 
-		/* appalling C++ hacks part 12387: how to differentiate an
-		 * uninitialized and expired weak_ptr.
-		 *
-		 * see: http://stackoverflow.com/questions/26913743/can-an-expired-weak-ptr-be-distinguished-from-an-uninitialized-one
-		 */
-
-		if (!(*x).controllable.owner_before (boost::weak_ptr<Controllable>()) &&
-		    !boost::weak_ptr<Controllable>().owner_before ((*x).controllable)) {
+		if (weak_ptr_is_not_null ((*x).controllable)) {
 			/* selection entry is for a controllable as part of a
 			   stripable, not the stripable object itself.
 			*/
@@ -142,7 +173,6 @@ CoreSelection::selected (boost::shared_ptr<const Stripable> s) const
 		}
 
 		boost::shared_ptr<Stripable> ss = (*x).stripable.lock();
-
 		if (s == ss) {
 			return true;
 		}
@@ -154,6 +184,10 @@ CoreSelection::selected (boost::shared_ptr<const Stripable> s) const
 bool
 CoreSelection::selected (boost::shared_ptr<const Controllable> c) const
 {
+	if (!c) {
+		return false;
+	}
+
 	Glib::Threads::RWLock::ReaderLock lm (_lock);
 
 	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ++x) {

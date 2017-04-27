@@ -42,7 +42,7 @@ class CoreSelection {
 	CoreSelection ();
 	~CoreSelection ();
 
-
+	void toggle (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
 	void add (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
 	void remove (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
 	void set (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>);
