@@ -429,7 +429,7 @@ class PublicEditor : public Gtkmm2ext::Tabbable {
 	virtual void center_screen (framepos_t) = 0;
 
 	virtual TrackViewList axis_views_from_routes (boost::shared_ptr<ARDOUR::RouteList>) const = 0;
-	virtual TrackViewList const & get_track_views () = 0;
+	virtual TrackViewList const & get_track_views () const = 0;
 
 	virtual DragManager* drags () const = 0;
         virtual void maybe_autoscroll (bool, bool, bool from_headers) = 0;

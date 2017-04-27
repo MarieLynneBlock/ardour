@@ -90,7 +90,7 @@ class Selection : public sigc::trackable, public PBD::ScopedConnectionList
 	/** only used when this class is used as a cut buffer */
 	MidiNoteSelection    midi_notes;
 
-	Selection (PublicEditor const * e);
+	Selection (PublicEditor const * e, bool follow_core);
 
 	// Selection& operator= (const Selection& other);
 
@@ -228,6 +228,9 @@ class Selection : public sigc::trackable, public PBD::ScopedConnectionList
   private:
 	PublicEditor const * editor;
 	uint32_t next_time_id;
+
+	void core_selection_changed (PBD::PropertyChange const & pc);
+	TrackViewList add_grouped_tracks (TrackViewList const & t);
 };
 
 bool operator==(const Selection& a, const Selection& b);

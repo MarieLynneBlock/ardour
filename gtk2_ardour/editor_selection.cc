@@ -258,6 +258,7 @@ Editor::set_selected_track (TimeAxisView& view, Selection::Operation op, bool no
 
 	switch (op) {
 	case Selection::Toggle:
+		cerr << "ES, toggle, view selected ? " << selection->selected (&view) << endl;
 		if (selection->selected (&view)) {
 			if (!no_remove) {
 				selection->remove (&view);
@@ -268,9 +269,7 @@ Editor::set_selected_track (TimeAxisView& view, Selection::Operation op, bool no
 		break;
 
 	case Selection::Add:
-		if (!selection->selected (&view)) {
-			selection->add (&view);
-		}
+		selection->add (&view);
 		break;
 
 	case Selection::Set:
@@ -1002,20 +1001,6 @@ struct SelectionOrderSorter {
 void
 Editor::track_selection_changed ()
 {
-	SelectionOrderSorter cmp;
-	selection->tracks.sort (cmp);
-
-	switch (selection->tracks.size()) {
-	case 0:
-		break;
-	default:
-		set_selected_mixer_strip (*(selection->tracks.back()));
-		if (!_track_selection_change_without_scroll) {
-			ensure_time_axis_view_is_visible (*(selection->tracks.back()), false);
-		}
-		break;
-	}
-
 	RouteNotificationListPtr routes (new RouteNotificationList);
 	StripableNotificationListPtr stripables (new StripableNotificationList);
 
@@ -1031,6 +1016,12 @@ Editor::track_selection_changed ()
 
 		(*i)->set_selected (yn);
 
+		if (yn) {
+			(*i)->reshow_selection (selection->time);
+		} else {
+			(*i)->hide_selection ();
+		}
+
 		TimeAxisView::Children c = (*i)->get_child_list ();
 		for (TimeAxisView::Children::iterator j = c.begin(); j != c.end(); ++j) {
 
@@ -1042,14 +1033,14 @@ Editor::track_selection_changed ()
 			}
 
 			(*j)->set_selected (cyn);
-		}
 
-		if (yn) {
-			(*i)->reshow_selection (selection->time);
-		} else {
-			(*i)->hide_selection ();
-		}
+			if (cyn) {
+				(*j)->reshow_selection (selection->time);
+			} else {
+				(*j)->hide_selection ();
+			}
 
+		}
 
 		if (yn) {
 			RouteTimeAxisView* rtav = dynamic_cast<RouteTimeAxisView*> (*i);
@@ -1058,6 +1049,7 @@ Editor::track_selection_changed ()
 				stripables->push_back (rtav->route());
 			}
 		}
+
 	}
 
 	ActionManager::set_sensitive (ActionManager::track_selection_sensitive_actions, !selection->tracks.empty());
@@ -1585,10 +1577,16 @@ Editor::select_all_objects (Selection::Operation op)
 {
 	list<Selectable *> touched;
 
-	TrackViewList ts  = track_views;
-
 	if (internal_editing() && select_all_internal_edit(op)) {
 		return;  // Selected notes
+	}
+
+	TrackViewList ts;
+
+	if (selection->tracks.empty()) {
+		ts = track_views;
+	} else {
+		ts = selection->tracks;
 	}
 
 	for (TrackViewList::iterator iter = ts.begin(); iter != ts.end(); ++iter) {
@@ -1596,9 +1594,7 @@ Editor::select_all_objects (Selection::Operation op)
 			continue;
 		}
 		(*iter)->get_selectables (0, max_framepos, 0, DBL_MAX, touched);
-		selection->add (*iter);
 	}
-
 
 	begin_reversible_selection_op (X_("select all"));
 	switch (op) {
@@ -1606,7 +1602,7 @@ Editor::select_all_objects (Selection::Operation op)
 		selection->add (touched);
 		break;
 	case Selection::Toggle:
-		selection->add (touched);
+		selection->toggle (touched);
 		break;
 	case Selection::Set:
 		selection->set (touched);

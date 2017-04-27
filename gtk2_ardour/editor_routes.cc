@@ -755,7 +755,6 @@ EditorRoutes::time_axis_views_added (list<TimeAxisView*> tavs)
 
 			row[_columns.is_track] = (boost::dynamic_pointer_cast<Track> (stripable) != 0);
 
-
 			if (midi_trk) {
 				row[_columns.is_input_active] = midi_trk->input_active ();
 				row[_columns.is_midi] = true;
@@ -1087,6 +1086,8 @@ void
 EditorRoutes::presentation_info_changed (PropertyChange const & what_changed)
 {
 	PropertyChange soh;
+
+	soh.add (Properties::selected);
 	soh.add (Properties::order);
 	soh.add (Properties::hidden);
 
@@ -1169,16 +1170,22 @@ EditorRoutes::sync_treeview_from_presentation_info (PropertyChange const & what_
 
 	if (what_changed.contains (Properties::selected)) {
 
+		/* by the time this is invoked, the GUI Selection model has
+		 * already updated itself.
+		 */
+
 		TrackViewList tvl;
 		PBD::Unwinder<bool> uw (_ignore_selection_change, true);
 
-		/* step one: set the treeview model selection state */
+		/* step one, tell the editor so that it will update its
+		   selection model
+		*/
+
+		_editor->track_selection_changed ();
+
+		/* step two: set the treeview model selection state */
 		for (TreeModel::Children::iterator ri = rows.begin(); ri != rows.end(); ++ri) {
 			boost::shared_ptr<Stripable> stripable = (*ri)[_columns.stripable];
-			cerr << "working on " << stripable << endl;
-			if (stripable) {
-				cerr << "\t" << stripable->name() << " use count = " << stripable.use_count() << endl;
-			}
 			if (stripable && stripable->is_selected()) {
 				TimeAxisView* tav = (*ri)[_columns.tv];
 				if (tav) {
@@ -1189,12 +1196,6 @@ EditorRoutes::sync_treeview_from_presentation_info (PropertyChange const & what_
 				_display.get_selection()->unselect (*ri);
 			}
 		}
-
-		/* step two: set the Selection (for stripables/routes) */
-		_editor->get_selection().set (tvl);
-
-		/* step three, tell the editor */
-		_editor->track_selection_changed ();
 	}
 
 	redisplay ();

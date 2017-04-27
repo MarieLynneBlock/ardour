@@ -133,14 +133,4 @@ AxisView::set_selected (bool yn)
 	}
 
 	Selectable::set_selected (yn);
-	boost::shared_ptr<Stripable> s = stripable ();
-	boost::shared_ptr<PBD::Controllable> c = controllable ();
-
-	if (s || c) {
-		if (yn) {
-			_session->selection().add (s, c);
-		} else {
-			_session->selection().remove (s, c);
-		}
-	}
 }

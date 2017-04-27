@@ -425,7 +425,7 @@ class Editor : public PublicEditor, public PBD::ScopedConnectionList, public ARD
 	void start_resize_line_ops ();
 	void end_resize_line_ops ();
 
-	TrackViewList const & get_track_views () {
+	TrackViewList const & get_track_views () const {
 		return track_views;
 	}
 
