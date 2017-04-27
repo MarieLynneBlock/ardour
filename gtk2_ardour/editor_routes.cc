@@ -320,7 +320,6 @@ EditorRoutes::EditorRoutes (Editor* e)
 	_display.set_enable_search (false);
 
 	Route::PluginSetup.connect_same_thread (*this, boost::bind (&EditorRoutes::plugin_setup, this, _1, _2, _3));
-	PresentationInfo::Change.connect (*this, MISSING_INVALIDATOR, boost::bind (&EditorRoutes::presentation_info_changed, this, _1), gui_context());
 }
 
 bool
@@ -1083,20 +1082,6 @@ EditorRoutes::sync_presentation_info_from_treeview ()
 }
 
 void
-EditorRoutes::presentation_info_changed (PropertyChange const & what_changed)
-{
-	PropertyChange soh;
-
-	soh.add (Properties::selected);
-	soh.add (Properties::order);
-	soh.add (Properties::hidden);
-
-	if (what_changed.contains (soh)) {
-		sync_treeview_from_presentation_info (what_changed);
-	}
-}
-
-void
 EditorRoutes::sync_treeview_from_presentation_info (PropertyChange const & what_changed)
 {
 	/* Some route order key(s) have been changed, make sure that
@@ -1177,13 +1162,8 @@ EditorRoutes::sync_treeview_from_presentation_info (PropertyChange const & what_
 		TrackViewList tvl;
 		PBD::Unwinder<bool> uw (_ignore_selection_change, true);
 
-		/* step one, tell the editor so that it will update its
-		   selection model
-		*/
+		/* set the treeview model selection state */
 
-		_editor->track_selection_changed ();
-
-		/* step two: set the treeview model selection state */
 		for (TreeModel::Children::iterator ri = rows.begin(); ri != rows.end(); ++ri) {
 			boost::shared_ptr<Stripable> stripable = (*ri)[_columns.stripable];
 			if (stripable && stripable->is_selected()) {

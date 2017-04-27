@@ -57,7 +57,7 @@ struct AudioRangeComparator {
 	}
 };
 
-Selection::Selection (const PublicEditor* e, bool follow_core)
+Selection::Selection (const PublicEditor* e)
 	: tracks (e)
 	, editor (e)
 	, next_time_id (0)
@@ -71,10 +71,6 @@ Selection::Selection (const PublicEditor* e, bool follow_core)
 
 	void (Selection::*point_remove)(ControlPoint*) = &Selection::remove;
 	ControlPoint::CatchDeletion.connect (*this, MISSING_INVALIDATOR, boost::bind (point_remove, this, _1), gui_context());
-
-	if (follow_core) {
-		PresentationInfo::Change.connect (*this, MISSING_INVALIDATOR, boost::bind (&Selection::core_selection_changed, this, _1), gui_context());
-	}
 }
 
 #if 0
@@ -1536,7 +1532,7 @@ Selection::set (const TrackViewList& track_list)
 	for (TrackSelection::const_iterator i = t.begin(); i != t.end(); ++i) {
 		boost::shared_ptr<Stripable> s = (*i)->stripable ();
 		boost::shared_ptr<Controllable> c = (*i)->controllable ();
-		selection.set (s, c);
+		selection.add (s, c);
 	}
 }
 
@@ -1602,6 +1598,8 @@ Selection::add_grouped_tracks (TrackViewList const & t)
 			}
 		}
 	}
+
+	cerr << "extra grouped tracks: " << added.size() << " + " << t.size() << endl;
 
 	/* now add the the trackview's passed in as actual arguments */
 	added.insert (added.end(), t.begin(), t.end());

@@ -390,8 +390,8 @@ Editor::Editor ()
 	, _visible_track_count (-1)
 	,  toolbar_selection_clock_table (2,3)
 	,  automation_mode_button (_("mode"))
-	, selection (new Selection (this, true))
-	, cut_buffer (new Selection (this, false))
+	, selection (new Selection (this))
+	, cut_buffer (new Selection (this))
 	, _selection_memento (new SelectionMemento())
 	, _all_region_actions_sensitized (false)
 	, _ignore_region_action (false)
@@ -641,6 +641,8 @@ Editor::Editor ()
 
 	bottom_hbox.set_border_width (2);
 	bottom_hbox.set_spacing (3);
+
+	PresentationInfo::Change.connect (*this, MISSING_INVALIDATOR, boost::bind (&Editor::presentation_info_changed, this, _1), gui_context());
 
 	_route_groups = new EditorRouteGroups (this);
 	_routes = new EditorRoutes (this);

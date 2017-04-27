@@ -32,8 +32,9 @@
 
 #include "control_protocol/control_protocol.h"
 
-#include "editor_drag.h"
 #include "editor.h"
+#include "editor_drag.h"
+#include "editor_routes.h"
 #include "actions.h"
 #include "audio_time_axis.h"
 #include "audio_region_view.h"
@@ -998,89 +999,139 @@ struct SelectionOrderSorter {
 };
 
 void
-Editor::track_selection_changed ()
+Editor::presentation_info_changed (PropertyChange const & what_changed)
 {
-	StripableNotificationListPtr stripables (new StripableNotificationList);
+	/* We cannot ensure ordering of the handlers for
+	 * PresentationInfo::Changed, so we have to do everything in order
+	 * here.
+	 *
+	 * 1. set GUI selection object
+	 * 2. update editor's knowledge of selection state, along with
+	 *    TimeAxisView selected state.
+	 * 3. update control surfaces and any relevant dialogs
+	 * 4. update EditorRoute's treeview
+	 */
 
-	for (TrackViewList::iterator i = track_views.begin(); i != track_views.end(); ++i) {
+	/* STEP 1: set the GUI selection state (in which TimeAxisViews for the
+	 * currently selected stripable/controllable duples are found and added
+	 */
 
-		bool yn = false;
+	selection->core_selection_changed (what_changed);
 
-		boost::shared_ptr<Stripable> s = (*i)->stripable ();
+	/* STEP 2: update TimeAxisView's knowledge of their selected state
+	 */
 
-		if (s) {
-			yn = _session->selection().selected (s);
+
+	PropertyChange pc;
+	pc.add (Properties::selected);
+
+	if (what_changed.contains (Properties::selected)) {
+
+		StripableNotificationListPtr stripables (new StripableNotificationList);
+
+		switch (selection->tracks.size()) {
+		case 0:
+			break;
+		default:
+			set_selected_mixer_strip (*(selection->tracks.back()));
+			if (!_track_selection_change_without_scroll) {
+				ensure_time_axis_view_is_visible (*(selection->tracks.back()), false);
+			}
+			break;
 		}
 
-		(*i)->set_selected (yn);
+		for (TrackViewList::iterator i = track_views.begin(); i != track_views.end(); ++i) {
 
-		if (yn) {
-			(*i)->reshow_selection (selection->time);
-		} else {
-			(*i)->hide_selection ();
-		}
+			bool yn = false;
 
-		TimeAxisView::Children c = (*i)->get_child_list ();
-		for (TimeAxisView::Children::iterator j = c.begin(); j != c.end(); ++j) {
+			boost::shared_ptr<Stripable> s = (*i)->stripable ();
 
-			bool cyn = false;
-			boost::shared_ptr<Controllable> controllable = (*j)->controllable ();
-
-			if (controllable) {
-				cyn = _session->selection().selected (controllable);
+			if (s) {
+				yn = _session->selection().selected (s);
 			}
 
-			(*j)->set_selected (cyn);
+			(*i)->set_selected (yn);
 
-			if (cyn) {
-				(*j)->reshow_selection (selection->time);
+			if (yn) {
+				(*i)->reshow_selection (selection->time);
 			} else {
-				(*j)->hide_selection ();
+				(*i)->hide_selection ();
 			}
 
-		}
+			TimeAxisView::Children c = (*i)->get_child_list ();
+			for (TimeAxisView::Children::iterator j = c.begin(); j != c.end(); ++j) {
 
-		if (yn) {
-			RouteTimeAxisView* rtav = dynamic_cast<RouteTimeAxisView*> (*i);
-			if (rtav) {
-				stripables->push_back (rtav->route());
-			}
-		}
+				bool cyn = false;
+				boost::shared_ptr<Controllable> controllable = (*j)->controllable ();
 
-	}
-
-	ActionManager::set_sensitive (ActionManager::track_selection_sensitive_actions, !selection->tracks.empty());
-
-	sensitize_the_right_region_actions (false);
-
-	/* notify control protocols */
-
-	ControlProtocol::StripableSelectionChanged (stripables);
-
-	if (sfbrowser && _session && !_session->deletion_in_progress()) {
-		uint32_t audio_track_cnt = 0;
-		uint32_t midi_track_cnt = 0;
-
-		for (TrackSelection::iterator x = selection->tracks.begin(); x != selection->tracks.end(); ++x) {
-			AudioTimeAxisView* atv = dynamic_cast<AudioTimeAxisView*>(*x);
-
-			if (atv) {
-				if (atv->is_audio_track()) {
-					audio_track_cnt++;
+				if (controllable) {
+					cyn = _session->selection().selected (controllable);
 				}
 
-			} else {
-				MidiTimeAxisView* mtv = dynamic_cast<MidiTimeAxisView*>(*x);
+				(*j)->set_selected (cyn);
 
-				if (mtv) {
-					if (mtv->is_midi_track()) {
-						midi_track_cnt++;
+				if (cyn) {
+					(*j)->reshow_selection (selection->time);
+				} else {
+					(*j)->hide_selection ();
+				}
+
+			}
+
+			if (yn) {
+				RouteTimeAxisView* rtav = dynamic_cast<RouteTimeAxisView*> (*i);
+				if (rtav) {
+					stripables->push_back (rtav->route());
+				}
+			}
+
+		}
+
+		ActionManager::set_sensitive (ActionManager::track_selection_sensitive_actions, !selection->tracks.empty());
+
+		sensitize_the_right_region_actions (false);
+
+		/* STEP 4: notify control protocols */
+
+		ControlProtocol::StripableSelectionChanged (stripables);
+
+		if (sfbrowser && _session && !_session->deletion_in_progress()) {
+			uint32_t audio_track_cnt = 0;
+			uint32_t midi_track_cnt = 0;
+
+			for (TrackSelection::iterator x = selection->tracks.begin(); x != selection->tracks.end(); ++x) {
+				AudioTimeAxisView* atv = dynamic_cast<AudioTimeAxisView*>(*x);
+
+				if (atv) {
+					if (atv->is_audio_track()) {
+						audio_track_cnt++;
+					}
+
+				} else {
+					MidiTimeAxisView* mtv = dynamic_cast<MidiTimeAxisView*>(*x);
+
+					if (mtv) {
+						if (mtv->is_midi_track()) {
+							midi_track_cnt++;
+						}
 					}
 				}
 			}
-		}
 
-		sfbrowser->reset (audio_track_cnt, midi_track_cnt);
+			sfbrowser->reset (audio_track_cnt, midi_track_cnt);
+		}
+	}
+
+	/* STEP 4: update EditorRoutes treeview */
+
+	PropertyChange soh;
+
+	soh.add (Properties::selected);
+	soh.add (Properties::order);
+	soh.add (Properties::hidden);
+
+	if (what_changed.contains (soh)) {
+		_routes->sync_treeview_from_presentation_info (what_changed);
 	}
 }
 
