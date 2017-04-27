@@ -111,6 +111,7 @@ Mixer_UI::Mixer_UI ()
 	, _maximised (false)
 	, _show_mixer_list (true)
 	, myactions (X_("mixer"))
+	, _selection (*this, *this)
 {
 	register_actions ();
 	load_bindings ();
@@ -892,10 +893,22 @@ Mixer_UI::strip_by_stripable (boost::shared_ptr<Stripable> s) const
 }
 
 AxisView*
-Mixer_UI::axis_by_stripable (boost::shared_ptr<Stripable> s) const
+Mixer_UI::axis_view_by_stripable (boost::shared_ptr<Stripable> s) const
 {
 	for (list<MixerStrip *>::const_iterator i = strips.begin(); i != strips.end(); ++i) {
 		if ((*i)->stripable() == s) {
+			return (*i);
+		}
+	}
+
+	return 0;
+}
+
+AxisView*
+Mixer_UI::axis_view_by_controllable (boost::shared_ptr<Controllable> c) const
+{
+	for (list<MixerStrip *>::const_iterator i = strips.begin(); i != strips.end(); ++i) {
+		if ((*i)->controllable() == c) {
 			return (*i);
 		}
 	}

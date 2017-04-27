@@ -1155,7 +1155,13 @@ class Editor : public PublicEditor, public PBD::ScopedConnectionList
 	/* track views */
 	TrackViewList track_views;
 	std::pair<TimeAxisView*, double> trackview_by_y_position (double, bool trackview_relative_offset = true) const;
-	TimeAxisView* axis_view_from_stripable (boost::shared_ptr<ARDOUR::Stripable>) const;
+
+	AxisView* axis_view_by_stripable (boost::shared_ptr<ARDOUR::Stripable>) const;
+	AxisView* axis_view_by_controllable (boost::shared_ptr<PBD::Controllable>) const;
+
+	TimeAxisView* time_axis_view_from_stripable (boost::shared_ptr<ARDOUR::Stripable> s) const {
+		return dynamic_cast<TimeAxisView*> (axis_view_by_stripable (s));
+	}
 
 	TrackViewList get_tracks_for_range_action () const;
 

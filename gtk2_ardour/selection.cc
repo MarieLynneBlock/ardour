@@ -1633,7 +1633,7 @@ Selection::core_selection_changed (PropertyChange const & what_changed)
 			continue;
 		}
 
-		TimeAxisView* tav = editor->axis_view_from_stripable (s);
+		TimeAxisView* tav = editor->time_axis_view_from_stripable (s);
 
 		if (!tav) {
 			continue;

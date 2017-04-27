@@ -49,6 +49,7 @@
 #include "gtkmm2ext/tabbable.h"
 #include "gtkmm2ext/visibility_tracker.h"
 
+#include "axis_provider.h"
 #include "editing.h"
 #include "selection.h"
 
@@ -107,7 +108,7 @@ using ARDOUR::framecnt_t;
  * of PublicEditor need not be recompiled if private methods or member variables
  * change.
  */
-class PublicEditor : public Gtkmm2ext::Tabbable,  public ARDOUR::SessionHandlePtr {
+class PublicEditor : public Gtkmm2ext::Tabbable,  public ARDOUR::SessionHandlePtr, public AxisViewProvider {
   public:
 	PublicEditor (Gtk::Widget& content);
 	virtual ~PublicEditor ();
@@ -351,6 +352,8 @@ class PublicEditor : public Gtkmm2ext::Tabbable,  public ARDOUR::SessionHandlePt
 
 	virtual RouteTimeAxisView* get_route_view_by_route_id (const PBD::ID& id) const = 0;
 
+	virtual TimeAxisView* time_axis_view_from_stripable (boost::shared_ptr<ARDOUR::Stripable> s) const = 0;
+
 	virtual void get_equivalent_regions (RegionView* rv, std::vector<RegionView*>&, PBD::PropertyID) const = 0;
 	virtual RegionView* regionview_from_region (boost::shared_ptr<ARDOUR::Region>) const = 0;
 	virtual RouteTimeAxisView* rtav_from_route (boost::shared_ptr<ARDOUR::Route>) const = 0;
@@ -419,8 +422,6 @@ class PublicEditor : public Gtkmm2ext::Tabbable,  public ARDOUR::SessionHandlePt
 	virtual ArdourCanvas::ScrollGroup* get_cursor_scroll_group () const = 0;
 
         virtual ArdourCanvas::GtkCanvasViewport* get_track_canvas() const = 0;
-
-	virtual TimeAxisView* axis_view_from_stripable (boost::shared_ptr<ARDOUR::Stripable>) const = 0;
 
         virtual void set_current_trimmable (boost::shared_ptr<ARDOUR::Trimmable>) = 0;
         virtual void set_current_movable (boost::shared_ptr<ARDOUR::Movable>) = 0;

@@ -1630,7 +1630,7 @@ EditorRoutes::move_selected_tracks (bool up)
 	/* build a list that includes time axis view information */
 
 	for (StripableList::const_iterator sli = sl.begin(); sli != sl.end(); ++sli) {
-		TimeAxisView* tv = _editor->axis_view_from_stripable (*sli);
+		TimeAxisView* tv = _editor->time_axis_view_from_stripable (*sli);
 		view_stripables.push_back (ViewStripable (tv, *sli));
 	}
 
@@ -1887,7 +1887,7 @@ EditorRoutes::show_tracks_with_regions_at_playhead ()
 
 	set<TimeAxisView*> show;
 	for (RouteList::const_iterator i = r->begin(); i != r->end(); ++i) {
-		TimeAxisView* tav = _editor->axis_view_from_stripable (*i);
+		TimeAxisView* tav = _editor->time_axis_view_from_stripable (*i);
 		if (tav) {
 			show.insert (tav);
 		}

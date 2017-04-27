@@ -1040,7 +1040,7 @@ Editor::control_unselect ()
 void
 Editor::control_select (boost::shared_ptr<Stripable> s, Selection::Operation op)
 {
-	TimeAxisView* tav = axis_view_from_stripable (s);
+	TimeAxisView* tav = time_axis_view_from_stripable (s);
 
 	if (tav) {
 		switch (op) {
@@ -5250,8 +5250,8 @@ Editor::region_view_removed ()
 	_summary->set_background_dirty ();
 }
 
-TimeAxisView*
-Editor::axis_view_from_stripable (boost::shared_ptr<Stripable> s) const
+AxisView*
+Editor::axis_view_by_stripable (boost::shared_ptr<Stripable> s) const
 {
 	for (TrackViewList::const_iterator j = track_views.begin (); j != track_views.end(); ++j) {
 		if ((*j)->stripable() == s) {
@@ -5262,6 +5262,17 @@ Editor::axis_view_from_stripable (boost::shared_ptr<Stripable> s) const
 	return 0;
 }
 
+AxisView*
+Editor::axis_view_by_controllable (boost::shared_ptr<Controllable> c) const
+{
+	for (TrackViewList::const_iterator j = track_views.begin (); j != track_views.end(); ++j) {
+		if ((*j)->controllable() == c) {
+			return *j;
+		}
+	}
+
+	return 0;
+}
 
 TrackViewList
 Editor::axis_views_from_routes (boost::shared_ptr<RouteList> r) const
@@ -5269,7 +5280,7 @@ Editor::axis_views_from_routes (boost::shared_ptr<RouteList> r) const
 	TrackViewList t;
 
 	for (RouteList::const_iterator i = r->begin(); i != r->end(); ++i) {
-		TimeAxisView* tv = axis_view_from_stripable (*i);
+		TimeAxisView* tv = time_axis_view_from_stripable (*i);
 		if (tv) {
 			t.push_back (tv);
 		}
