@@ -685,6 +685,8 @@ Mixer_UI::remove_strip (MixerStrip* strip)
 void
 Mixer_UI::presentation_info_changed (PropertyChange const & what_changed)
 {
+	_selection.presentation_info_changed (what_changed);
+
 	PropertyChange soh;
 	soh.add (Properties::selected);
 	soh.add (Properties::order);

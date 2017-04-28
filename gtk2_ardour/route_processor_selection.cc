@@ -80,11 +80,22 @@ RouteProcessorSelection::presentation_info_changed (PropertyChange const & what_
 	PropertyChange pc;
 	pc.add (Properties::selected);
 
-	/* lookup axis view from selected */
+	CoreSelection::StripableControllables sc;
+	shp.session()->selection().get_stripables (sc);
 
-	/* store in axes */
+	for (AxisViewSelection::iterator a = axes.begin(); a != axes.end(); ++a) {
+		(*a)->set_selected (false);
+	}
 
-	/* set selected */
+	axes.clear ();
+
+	for (CoreSelection::StripableControllables::const_iterator i = sc.begin(); i != sc.end(); ++i) {
+		AxisView* av = avp.axis_view_by_stripable ((*i).stripable);
+		if (av) {
+			axes.insert (av);
+			av->set_selected (true);
+		}
+	}
 }
 
 void
