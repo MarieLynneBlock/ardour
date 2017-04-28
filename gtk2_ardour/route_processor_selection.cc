@@ -47,7 +47,7 @@ RouteProcessorSelection&
 RouteProcessorSelection::operator= (const RouteProcessorSelection& other)
 {
 	if (&other != this) {
-		(*((ProcessorSelection*) this)) = (*((ProcessorSelection*) &other));
+		(*((ProcessorSelection*) this)) = (*((ProcessorSelection const *) &other));
 		axes = other.axes;
 	}
 	return *this;
