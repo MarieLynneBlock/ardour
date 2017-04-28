@@ -54,9 +54,10 @@ class CoreSelection {
 	struct StripableControllable {
 		boost::shared_ptr<Stripable> stripable;
 		boost::shared_ptr<PBD::Controllable> controllable;
+		int order;
 
-		StripableControllable (boost::shared_ptr<Stripable> s, boost::shared_ptr<PBD::Controllable> c)
-			: stripable (s), controllable (c) {}
+		StripableControllable (boost::shared_ptr<Stripable> s, boost::shared_ptr<PBD::Controllable> c, int o)
+			: stripable (s), controllable (c), order (o) {}
 	};
 
 	typedef std::vector<StripableControllable> StripableControllables;
@@ -65,12 +66,14 @@ class CoreSelection {
 
   private:
 	mutable Glib::Threads::RWLock _lock;
+	int selection_order;
 
 	struct SelectedStripable {
-		SelectedStripable (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable> = boost::shared_ptr<PBD::Controllable>());
+		SelectedStripable (boost::shared_ptr<Stripable>, boost::shared_ptr<PBD::Controllable>, int);
 
 		boost::weak_ptr<Stripable> stripable;
 		boost::weak_ptr<PBD::Controllable> controllable;
+		int order;
 
 		bool operator< (SelectedStripable const & other) const {
 			boost::shared_ptr<Stripable> s1 = stripable.lock();

@@ -22,6 +22,7 @@
 
 #include "ardour/debug.h"
 #include "ardour/selection.h"
+#include "ardour/stripable.h"
 
 using namespace ARDOUR;
 using namespace PBD;
@@ -35,6 +36,7 @@ CoreSelection::send_selection_change ()
 }
 
 CoreSelection::CoreSelection ()
+	: selection_order (0)
 {
 }
 
@@ -62,13 +64,13 @@ CoreSelection::add (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllab
 	{
 		Glib::Threads::RWLock::WriterLock lm (_lock);
 
-		SelectedStripable ss (s, c);
+		SelectedStripable ss (s, c, g_atomic_int_add (&selection_order, 1));
 
 		if (_stripables.insert (ss).second) {
-			DEBUG_TRACE (DEBUG::Selection, string_compose ("added %1/%2 to s/c selection\n", s, c));
+			DEBUG_TRACE (DEBUG::Selection, string_compose ("added %1/%2 to s/c selection\n", s->name(), c));
 			send = true;
 		} else {
-			DEBUG_TRACE (DEBUG::Selection, string_compose ("%1/%2 already in s/c selection\n", s, c));
+			DEBUG_TRACE (DEBUG::Selection, string_compose ("%1/%2 already in s/c selection\n", s->name(), c));
 		}
 	}
 
@@ -84,7 +86,7 @@ CoreSelection::remove (boost::shared_ptr<Stripable> s, boost::shared_ptr<Control
 	{
 		Glib::Threads::RWLock::WriterLock lm (_lock);
 
-		SelectedStripable ss (s, c);
+		SelectedStripable ss (s, c, 0);
 
 		SelectedStripables::iterator i = _stripables.find (ss);
 
@@ -106,7 +108,7 @@ CoreSelection::set (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllab
 	{
 		Glib::Threads::RWLock::WriterLock lm (_lock);
 
-		SelectedStripable ss (s, c);
+		SelectedStripable ss (s, c, g_atomic_int_add (&selection_order, 1));
 
 		if (_stripables.size() == 1 && _stripables.find (ss) != _stripables.end()) {
 			std::cerr << "Already selected\n";
@@ -115,7 +117,7 @@ CoreSelection::set (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllab
 
 		_stripables.clear ();
 		_stripables.insert (ss);
-		DEBUG_TRACE (DEBUG::Selection, string_compose ("set s/c selection to %1/%2\n", s, c));
+		DEBUG_TRACE (DEBUG::Selection, string_compose ("set s/c selection to %1/%2\n", s->name(), c));
 	}
 
 	send_selection_change ();
@@ -201,11 +203,18 @@ CoreSelection::selected (boost::shared_ptr<const Controllable> c) const
 	return false;
 }
 
-CoreSelection::SelectedStripable::SelectedStripable (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllable> c)
+CoreSelection::SelectedStripable::SelectedStripable (boost::shared_ptr<Stripable> s, boost::shared_ptr<Controllable> c, int o)
+	: stripable (s)
+	, controllable (c)
+	, order (o)
 {
-	stripable = s;
-	controllable = c;
 }
+
+struct StripableControllerSort {
+	bool operator() (CoreSelection::StripableControllable const &a, CoreSelection::StripableControllable const & b) const {
+		return a.order < b.order;
+	}
+};
 
 void
 CoreSelection::get_stripables (StripableControllables& sc) const
@@ -215,6 +224,11 @@ CoreSelection::get_stripables (StripableControllables& sc) const
 	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ++x) {
 		boost::shared_ptr<Stripable> s = (*x).stripable.lock();
 		boost::shared_ptr<Controllable> c = (*x).controllable.lock();
-		sc.push_back (StripableControllable (s, c));
+		if (s || c) {
+			sc.push_back (StripableControllable (s, c, (*x).order));
+		}
 	}
+
+	StripableControllerSort cmp;
+	sort (sc.begin(), sc.end(), cmp);
 }
