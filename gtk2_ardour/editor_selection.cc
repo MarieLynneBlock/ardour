@@ -1003,14 +1003,13 @@ Editor::presentation_info_changed (PropertyChange const & what_changed)
 {
 	/* We cannot ensure ordering of the handlers for
 	 * PresentationInfo::Changed, so we have to do everything in order
-	 * here.
-	 *
-	 * 1. set GUI selection object
-	 * 2. update editor's knowledge of selection state, along with
-	 *    TimeAxisView selected state.
-	 * 3. update control surfaces and any relevant dialogs
-	 * 4. update EditorRoute's treeview
+	 * here, as a single handler.
 	 */
+
+	for (TrackViewList::iterator i = selection->tracks.begin(); i != selection->tracks.end(); ++i) {
+		(*i)->set_selected (false);
+		(*i)->hide_selection ();
+	}
 
 	/* STEP 1: set the GUI selection state (in which TimeAxisViews for the
 	 * currently selected stripable/controllable duples are found and added
@@ -1040,51 +1039,50 @@ Editor::presentation_info_changed (PropertyChange const & what_changed)
 			break;
 		}
 
-		for (TrackViewList::iterator i = track_views.begin(); i != track_views.end(); ++i) {
+		CoreSelection::StripableControllables sc;
+		_session->selection().get_stripables (sc);
 
-			bool yn = false;
+		for (CoreSelection::StripableControllables::const_iterator i = sc.begin(); i != sc.end(); ++i) {
 
-			boost::shared_ptr<Stripable> s = (*i)->stripable ();
+			AxisView* av = axis_view_by_stripable ((*i).stripable);
 
-			if (s) {
-				yn = _session->selection().selected (s);
+			if (!av) {
+				continue;
 			}
 
-			(*i)->set_selected (yn);
+			TimeAxisView* tav = dynamic_cast<TimeAxisView*> (av);
 
-			if (yn) {
-				(*i)->reshow_selection (selection->time);
+			if (!tav) {
+				continue; /* impossible */
+			}
+
+			if (!(*i).controllable) {
+
+				/* "parent" track selected */
+
+				tav->set_selected (true);
+				tav->reshow_selection (selection->time);
+
 			} else {
-				(*i)->hide_selection ();
-			}
 
-			TimeAxisView::Children c = (*i)->get_child_list ();
-			for (TimeAxisView::Children::iterator j = c.begin(); j != c.end(); ++j) {
+				/* possibly a child */
 
-				bool cyn = false;
-				boost::shared_ptr<Controllable> controllable = (*j)->controllable ();
+				TimeAxisView::Children c = tav->get_child_list ();
 
-				if (controllable) {
-					cyn = _session->selection().selected (controllable);
-				}
+				for (TimeAxisView::Children::iterator j = c.begin(); j != c.end(); ++j) {
 
-				(*j)->set_selected (cyn);
+					boost::shared_ptr<Controllable> controllable = (*j)->controllable ();
 
-				if (cyn) {
+					if (controllable != (*i).controllable) {
+						continue;
+					}
+
+					(*j)->set_selected (true);
 					(*j)->reshow_selection (selection->time);
-				} else {
-					(*j)->hide_selection ();
-				}
-
-			}
-
-			if (yn) {
-				RouteTimeAxisView* rtav = dynamic_cast<RouteTimeAxisView*> (*i);
-				if (rtav) {
-					stripables->push_back (rtav->route());
 				}
 			}
 
+			stripables->push_back ((*i).stripable);
 		}
 
 		ActionManager::set_sensitive (ActionManager::track_selection_sensitive_actions, !selection->tracks.empty());
