@@ -206,3 +206,15 @@ CoreSelection::SelectedStripable::SelectedStripable (boost::shared_ptr<Stripable
 	stripable = s;
 	controllable = c;
 }
+
+void
+CoreSelection::get_stripables (StripableControllables& sc) const
+{
+	Glib::Threads::RWLock::ReaderLock lm (_lock);
+
+	for (SelectedStripables::const_iterator x = _stripables.begin(); x != _stripables.end(); ++x) {
+		boost::shared_ptr<Stripable> s = (*x).stripable.lock();
+		boost::shared_ptr<Controllable> c = (*x).controllable.lock();
+		sc.push_back (StripableControllable (s, c));
+	}
+}

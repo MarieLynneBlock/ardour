@@ -51,6 +51,18 @@ class CoreSelection {
 	bool selected (boost::shared_ptr<const Stripable>) const;
 	bool selected (boost::shared_ptr<const PBD::Controllable>) const;
 
+	struct StripableControllable {
+		boost::shared_ptr<Stripable> stripable;
+		boost::shared_ptr<PBD::Controllable> controllable;
+
+		StripableControllable (boost::shared_ptr<Stripable> s, boost::shared_ptr<PBD::Controllable> c)
+			: stripable (s), controllable (c) {}
+	};
+
+	typedef std::vector<StripableControllable> StripableControllables;
+
+	void get_stripables (StripableControllables&) const;
+
   private:
 	mutable Glib::Threads::RWLock _lock;
 
