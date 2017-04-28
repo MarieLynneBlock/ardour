@@ -1599,8 +1599,6 @@ Selection::add_grouped_tracks (TrackViewList const & t)
 		}
 	}
 
-	cerr << "extra grouped tracks: " << added.size() << " + " << t.size() << endl;
-
 	/* now add the the trackview's passed in as actual arguments */
 	added.insert (added.end(), t.begin(), t.end());
 
